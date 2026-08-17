@@ -49,18 +49,29 @@ export function TradesPage() {
     setEditingTradeId(null);
   }
 
-  function handleFormSubmit(values: TradeFormValues, screenshotIds: string[]): void {
-    if (editingTradeId) {
-      updateTrade(editingTradeId, values, screenshotIds);
-    } else {
-      addTrade(values, screenshotIds);
+  async function handleFormSubmit(values: TradeFormValues, screenshotIds: string[]): Promise<void> {
+    try {
+      if (editingTradeId) {
+        await updateTrade(editingTradeId, values, screenshotIds);
+      } else {
+        await addTrade(values, screenshotIds);
+      }
+      closeForm();
+    } catch (err) {
+      console.error('Failed to save trade:', err);
+      alert('Failed to save trade. Please try again.');
     }
-    closeForm();
   }
 
-  function handleConfirmDelete(): void {
-    if (deletingTradeId) deleteTrade(deletingTradeId);
-    setDeletingTradeId(null);
+  async function handleConfirmDelete(): Promise<void> {
+    if (!deletingTradeId) return;
+    try {
+      await deleteTrade(deletingTradeId);
+      setDeletingTradeId(null);
+    } catch (err) {
+      console.error('Failed to delete trade:', err);
+      alert('Failed to delete trade. Please try again.');
+    }
   }
 
   return (

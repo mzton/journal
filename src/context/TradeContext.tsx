@@ -1,28 +1,21 @@
 /**
  * context/TradeContext.tsx
  * ----------------------------------------------------------------------------
- * CRUD for the trade journal itself. Trades are namespaced per user
- * (STORAGE_KEYS.trades(userId)) so switching accounts on the same device
- * never mixes journals together.
- *
- * This context depends on AuthContext (via useAuth) to know *whose* trades
- * to load — AuthProvider must be an ancestor of TradeProvider in the tree
- * (see App.tsx).
+ * CRUD for the trade journal itself.
  * ----------------------------------------------------------------------------
  */
 
 import { createContext, useEffect, useState, type ReactNode } from 'react';
 import type { Trade, TradeFormValues } from '../types';
 import { useAuth } from '../hooks/useAuth';
-import { deleteScreenshot } from '../utils/screenshotStore';
-import { readJSON, STORAGE_KEYS, writeJSON } from '../utils/storage';
+import { api } from '../utils/api';
 
 export interface TradeContextValue {
   trades: Trade[];
   isLoading: boolean;
-  addTrade: (values: TradeFormValues, screenshotIds: string[]) => void;
-  updateTrade: (id: string, values: TradeFormValues, screenshotIds: string[]) => void;
-  deleteTrade: (id: string) => void;
+  addTrade: (values: TradeFormValues, screenshotIds: string[]) => Promise<void>;
+  updateTrade: (id: string, values: TradeFormValues, screenshotIds: string[]) => Promise<void>;
+  deleteTrade: (id: string) => Promise<void>;
   getTradeById: (id: string) => Trade | undefined;
 }
 
@@ -40,63 +33,30 @@ export function TradeProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
-    setTrades(readJSON<Trade[]>(STORAGE_KEYS.trades(currentUser.id), []));
-    setIsLoading(false);
+    
+    setIsLoading(true);
+    api.trades.list()
+      .then(({ trades: fetchedTrades }) => setTrades(fetchedTrades))
+      .catch((err) => console.error('Failed to load trades:', err))
+      .finally(() => setIsLoading(false));
   }, [currentUser]);
 
-  function persist(userId: string, next: Trade[]): void {
-    writeJSON(STORAGE_KEYS.trades(userId), next);
+  async function addTrade(values: TradeFormValues, screenshotIds: string[]): Promise<void> {
+    if (!currentUser) return;
+    const { trade } = await api.trades.create(values, screenshotIds);
+    setTrades((prev) => [trade, ...prev]);
   }
 
-  function addTrade(values: TradeFormValues, screenshotIds: string[]): void {
+  async function updateTrade(id: string, values: TradeFormValues, screenshotIds: string[]): Promise<void> {
     if (!currentUser) return;
-    const now = new Date().toISOString();
-    const trade: Trade = {
-      ...values,
-      id: crypto.randomUUID(),
-      userId: currentUser.id,
-      status: values.exitPrice !== undefined ? 'closed' : 'open',
-      screenshotIds,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setTrades((prev) => {
-      const next = [trade, ...prev];
-      persist(currentUser.id, next);
-      return next;
-    });
+    const { trade } = await api.trades.update(id, values, screenshotIds);
+    setTrades((prev) => prev.map((t) => (t.id === id ? trade : t)));
   }
 
-  function updateTrade(id: string, values: TradeFormValues, screenshotIds: string[]): void {
+  async function deleteTrade(id: string): Promise<void> {
     if (!currentUser) return;
-    setTrades((prev) => {
-      const next = prev.map((trade) =>
-        trade.id === id
-          ? {
-              ...trade,
-              ...values,
-              status: (values.exitPrice !== undefined ? 'closed' : 'open') as Trade['status'],
-              screenshotIds,
-              updatedAt: new Date().toISOString(),
-            }
-          : trade,
-      );
-      persist(currentUser.id, next);
-      return next;
-    });
-  }
-
-  function deleteTrade(id: string): void {
-    if (!currentUser) return;
-    const trade = trades.find((t) => t.id === id);
-    trade?.screenshotIds?.forEach((screenshotId) => {
-      void deleteScreenshot(screenshotId);
-    });
-    setTrades((prev) => {
-      const next = prev.filter((t) => t.id !== id);
-      persist(currentUser.id, next);
-      return next;
-    });
+    await api.trades.remove(id);
+    setTrades((prev) => prev.filter((t) => t.id !== id));
   }
 
   function getTradeById(id: string): Trade | undefined {

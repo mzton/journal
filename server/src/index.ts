@@ -21,8 +21,9 @@ async function main() {
   const app = Fastify({ logger: true });
 
   await app.register(cors, {
-    origin: corsOrigins,
+    origin: corsOrigins.includes('*') ? true : corsOrigins,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   await app.register(multipart, {

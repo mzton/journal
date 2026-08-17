@@ -15,7 +15,11 @@
 
 import type { PublicUser, Trade, TradeFormValues } from '../types';
 
-const BASE_URL = import.meta.env.VITE_API_URL as string | undefined;
+let rawUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+if (rawUrl && !/^https?:\/\//i.test(rawUrl)) {
+  rawUrl = `https://${rawUrl}`;
+}
+const BASE_URL = rawUrl ? rawUrl.replace(/\/+$/, '') : undefined;
 const TOKEN_KEY = 'tj_token';
 
 if (!BASE_URL) {

@@ -13,11 +13,26 @@
  * ----------------------------------------------------------------------------
  */
 
-/** Parses a "YYYY-MM-DD" string as a local-time Date (see file header for why
- *  this matters — never just do `new Date(dateString)`). */
-export function parseLocalDate(dateString: string): Date {
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, (month ?? 1) - 1, day ?? 1);
+/** Normalizes any ISO/SQL date string or date key to a clean "YYYY-MM-DD" string. */
+export function normalizeDateKey(dateString: string | null | undefined): string {
+  if (!dateString) return todayKey();
+  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[1]}-${match[2]}-${match[3]}`;
+  }
+  return dateString.slice(0, 10);
+}
+
+/** Parses a "YYYY-MM-DD" or ISO date string as a local-time Date safely. */
+export function parseLocalDate(dateString: string | null | undefined): Date {
+  if (!dateString) return new Date();
+  const cleanKey = normalizeDateKey(dateString);
+  const [year, month, day] = cleanKey.split('-').map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    const fallback = new Date(dateString);
+    return isNaN(fallback.getTime()) ? new Date() : fallback;
+  }
+  return new Date(year, month - 1, day);
 }
 
 /** Formats a Date as "YYYY-MM-DD" using local time components (the inverse
@@ -35,8 +50,11 @@ export function todayKey(): string {
 }
 
 /** Short, locale-aware display format, e.g. "Jul 11, 2026". */
-export function formatDateShort(dateString: string): string {
-  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(parseLocalDate(dateString));
+export function formatDateShort(dateString: string | null | undefined): string {
+  if (!dateString) return '—';
+  const parsed = parseLocalDate(dateString);
+  if (isNaN(parsed.getTime())) return String(dateString);
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(parsed);
 }
 
 /** "July 2026" — used as the Calendar page's month heading. */

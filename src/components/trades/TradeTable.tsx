@@ -62,8 +62,8 @@ export function TradeTable({ trades, onView, onEdit, onDelete }: TradeTableProps
                     {trade.status === 'open' ? 'Open' : 'Closed'}
                   </Badge>
                 </td>
-                <td className="num">{trade.entryPrice.toFixed(2)}</td>
-                <td className="num">{trade.exitPrice !== undefined ? trade.exitPrice.toFixed(2) : '—'}</td>
+                <td className="num">{trade.entryPrice != null ? trade.entryPrice.toFixed(2) : '0.00'}</td>
+                <td className="num">{trade.exitPrice != null ? trade.exitPrice.toFixed(2) : '—'}</td>
                 <td className="num">{trade.quantity}</td>
                 <td className={`num ${pnlClass}`}>{trade.status === 'closed' ? formatCurrency(metrics.pnl) : '—'}</td>
                 <td className={`num ${pnlClass}`}>

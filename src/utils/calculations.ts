@@ -29,10 +29,11 @@
  */
 
 import type { AnalyticsSummary, DailyPnlSummary, Trade, TradeFilters, TradeMetrics } from '../types';
+import { normalizeDateKey } from './dateHelpers';
 
 /** Computes PnL, PnL%, margin used, planned R:R, realized R-multiple, and
  *  win/loss for a single trade. Safe to call on open trades (exitPrice
- *  undefined) — PnL is reported as 0 and realizedR is left undefined since
+ *  undefined/null) — PnL is reported as 0 and realizedR is left undefined since
  *  nothing is realized yet, but plannedRR is still computed if stop-loss &
  *  take-profit are set. Falls back to 1x if `leverage` is missing (e.g.
  *  trades saved before leverage was added). */
@@ -41,18 +42,18 @@ export function calculateTradeMetrics(trade: Trade): TradeMetrics {
   const marginUsed = (trade.entryPrice * trade.quantity) / leverage;
 
   const riskPerUnit =
-    trade.stopLoss !== undefined ? Math.abs(trade.entryPrice - trade.stopLoss) : undefined;
+    trade.stopLoss != null ? Math.abs(trade.entryPrice - trade.stopLoss) : undefined;
   const riskAmount = riskPerUnit !== undefined ? riskPerUnit * trade.quantity : undefined;
 
   const plannedRR = (() => {
-    if (riskPerUnit === undefined || riskPerUnit === 0 || trade.takeProfit === undefined) {
+    if (riskPerUnit === undefined || riskPerUnit === 0 || trade.takeProfit == null) {
       return undefined;
     }
     const rewardPerUnit = Math.abs(trade.takeProfit - trade.entryPrice);
     return rewardPerUnit / riskPerUnit;
   })();
 
-  if (trade.exitPrice === undefined) {
+  if (trade.exitPrice == null) {
     return { pnl: 0, pnlPercent: 0, marginUsed, plannedRR, realizedR: undefined, isWin: false };
   }
 
@@ -87,8 +88,9 @@ export function applyTradeFilters(trades: Trade[], filters: TradeFilters): Trade
       if (filters.outcome === 'loss' && pnl >= 0) return false;
     }
 
-    if (filters.dateFrom && trade.entryDate < filters.dateFrom) return false;
-    if (filters.dateTo && trade.entryDate > filters.dateTo) return false;
+    const entryDateKey = normalizeDateKey(trade.entryDate);
+    if (filters.dateFrom && entryDateKey < filters.dateFrom) return false;
+    if (filters.dateTo && entryDateKey > filters.dateTo) return false;
 
     return true;
   });
@@ -146,7 +148,7 @@ export function calculateDailySummaries(trades: Trade[]): DailyPnlSummary[] {
 
   trades.forEach((trade) => {
     if (trade.status !== 'closed' || !trade.exitDate) return;
-    const day = trade.exitDate;
+    const day = normalizeDateKey(trade.exitDate);
     const { pnl, marginUsed } = calculateTradeMetrics(trade);
 
     const existing = byDay.get(day) ?? { pnl: 0, marginUsed: 0, tradeCount: 0 };

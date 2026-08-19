@@ -15,7 +15,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import type { PositionType, Trade, TradeFormValues } from '../../types';
 import { calculateTradeMetrics } from '../../utils/calculations';
-import { todayKey } from '../../utils/dateHelpers';
+import { normalizeDateKey, todayKey } from '../../utils/dateHelpers';
 import { formatCurrency, formatPercent, formatPrice, formatR, formatRatio } from '../../utils/format';
 import { validateTradeForm, type TradeFormErrors, type TradeFormInput } from '../../utils/validation';
 import { Button } from '../common/Button';
@@ -34,15 +34,15 @@ function tradeToFormInput(trade?: Trade): TradeFormInput {
   return {
     symbol: trade?.symbol ?? '',
     positionType: trade?.positionType ?? 'long',
-    quantity: trade?.quantity !== undefined ? String(trade.quantity) : '',
-    leverage: trade?.leverage !== undefined ? String(trade.leverage) : '1',
-    entryPrice: trade?.entryPrice !== undefined ? String(trade.entryPrice) : '',
-    exitPrice: trade?.exitPrice !== undefined ? String(trade.exitPrice) : '',
-    stopLoss: trade?.stopLoss !== undefined ? String(trade.stopLoss) : '',
-    takeProfit: trade?.takeProfit !== undefined ? String(trade.takeProfit) : '',
-    fees: trade?.fees !== undefined ? String(trade.fees) : '',
-    entryDate: trade?.entryDate ?? todayKey(),
-    exitDate: trade?.exitDate ?? '',
+    quantity: trade?.quantity != null ? String(trade.quantity) : '',
+    leverage: trade?.leverage != null ? String(trade.leverage) : '1',
+    entryPrice: trade?.entryPrice != null ? String(trade.entryPrice) : '',
+    exitPrice: trade?.exitPrice != null ? String(trade.exitPrice) : '',
+    stopLoss: trade?.stopLoss != null ? String(trade.stopLoss) : '',
+    takeProfit: trade?.takeProfit != null ? String(trade.takeProfit) : '',
+    fees: trade?.fees != null ? String(trade.fees) : '',
+    entryDate: trade?.entryDate ? normalizeDateKey(trade.entryDate) : todayKey(),
+    exitDate: trade?.exitDate ? normalizeDateKey(trade.exitDate) : '',
     notes: trade?.notes ?? '',
   };
 }

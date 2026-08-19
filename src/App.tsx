@@ -14,6 +14,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TradeProvider } from './context/TradeContext';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AppLayout } from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
@@ -25,29 +26,31 @@ import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <TradeProvider>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
+    <ErrorBoundary>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <TradeProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<DashboardPage />} />
-                  <Route path="/trades" element={<TradesPage />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<DashboardPage />} />
+                    <Route path="/trades" element={<TradesPage />} />
+                    <Route path="/calendar" element={<CalendarPage />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              <Route path="/404" element={<NotFoundPage />} />
-              <Route path="*" element={<Navigate to="/404" replace />} />
-            </Routes>
-          </TradeProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+                <Route path="/404" element={<NotFoundPage />} />
+                <Route path="*" element={<Navigate to="/404" replace />} />
+              </Routes>
+            </TradeProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

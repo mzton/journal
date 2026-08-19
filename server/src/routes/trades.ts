@@ -34,6 +34,14 @@ const tradeSchema = z.object({
   screenshotIds: z.array(z.string()).optional(),
 });
 
+function formatTrade<T extends { entryDate: string; exitDate?: string | null }>(trade: T): T {
+  return {
+    ...trade,
+    entryDate: trade.entryDate ? trade.entryDate.slice(0, 10) : trade.entryDate,
+    exitDate: trade.exitDate ? trade.exitDate.slice(0, 10) : trade.exitDate,
+  };
+}
+
 export default async function tradeRoutes(app: FastifyInstance) {
   // Everything in this router requires a valid token.
   app.addHook('preHandler', app.authenticate);
@@ -44,7 +52,7 @@ export default async function tradeRoutes(app: FastifyInstance) {
       .from(trades)
       .where(eq(trades.userId, request.user.id))
       .orderBy(desc(trades.createdAt));
-    return { trades: rows };
+    return { trades: rows.map(formatTrade) };
   });
 
   app.post('/', async (request, reply) => {
@@ -62,7 +70,7 @@ export default async function tradeRoutes(app: FastifyInstance) {
         screenshotIds: values.screenshotIds ?? [],
       })
       .returning();
-    return reply.code(201).send({ trade });
+    return reply.code(201).send({ trade: formatTrade(trade) });
   });
 
   app.patch('/:id', async (request, reply) => {
@@ -85,7 +93,7 @@ export default async function tradeRoutes(app: FastifyInstance) {
       .returning();
 
     if (!updated) return reply.code(404).send({ error: 'Trade not found' });
-    return reply.send({ trade: updated });
+    return reply.send({ trade: formatTrade(updated) });
   });
 
   app.delete('/:id', async (request, reply) => {

@@ -42,11 +42,11 @@ export function TradeDetailModal({ trade, onClose }: TradeDetailModalProps) {
           <DetailField label="Quantity" value={String(trade.quantity)} />
           <DetailField label="Leverage" value={formatLeverage(trade.leverage ?? 1)} />
           <DetailField label="Margin used" value={formatPrice(metrics.marginUsed)} />
-          <DetailField label="Entry price" value={trade.entryPrice.toFixed(2)} />
-          <DetailField label="Exit price" value={trade.exitPrice !== undefined ? trade.exitPrice.toFixed(2) : '—'} />
-          <DetailField label="Stop-loss" value={trade.stopLoss !== undefined ? trade.stopLoss.toFixed(2) : '—'} />
-          <DetailField label="Take-profit" value={trade.takeProfit !== undefined ? trade.takeProfit.toFixed(2) : '—'} />
-          <DetailField label="Fees" value={trade.fees !== undefined ? trade.fees.toFixed(2) : '—'} />
+          <DetailField label="Entry price" value={trade.entryPrice != null ? trade.entryPrice.toFixed(2) : '—'} />
+          <DetailField label="Exit price" value={trade.exitPrice != null ? trade.exitPrice.toFixed(2) : '—'} />
+          <DetailField label="Stop-loss" value={trade.stopLoss != null ? trade.stopLoss.toFixed(2) : '—'} />
+          <DetailField label="Take-profit" value={trade.takeProfit != null ? trade.takeProfit.toFixed(2) : '—'} />
+          <DetailField label="Fees" value={trade.fees != null ? trade.fees.toFixed(2) : '—'} />
           <DetailField label="Entry date" value={formatDateShort(trade.entryDate)} />
           <DetailField label="Exit date" value={trade.exitDate ? formatDateShort(trade.exitDate) : '—'} />
         </div>

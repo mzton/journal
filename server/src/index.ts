@@ -32,6 +32,7 @@ async function main() {
 
   await app.register(authPlugin);
 
+  app.get('/', async () => ({ status: 'ok', service: 'journal-api' }));
   app.get('/health', async () => ({ status: 'ok' }));
 
   await app.register(authRoutes, { prefix: '/auth' });
